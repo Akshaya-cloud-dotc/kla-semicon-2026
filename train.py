@@ -71,13 +71,33 @@ class SSIMLoss(nn.Module):
             return 1.0 - ssim_map.mean(1).mean(1).mean(1)
 
 class CombinedLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, loss_type='charbonnier_ssim', ssim_weight=0.1, fft_weight=0.05):
         super(CombinedLoss, self).__init__()
+        self.loss_type = loss_type
+        self.ssim_weight = ssim_weight
+        self.fft_weight = fft_weight
+        
+        self.l1 = nn.L1Loss()
         self.charbonnier = CharbonnierLoss()
         self.ssim = SSIMLoss()
 
     def forward(self, x, y):
-        return self.charbonnier(x, y) + 0.1 * self.ssim(x, y)
+        if self.loss_type == 'l1':
+            return self.l1(x, y)
+        elif self.loss_type == 'charbonnier':
+            return self.charbonnier(x, y)
+        elif self.loss_type == 'charbonnier_ssim':
+            return self.charbonnier(x, y) + self.ssim_weight * self.ssim(x, y)
+        elif self.loss_type == 'charbonnier_ssim_fft':
+            base_loss = self.charbonnier(x, y) + self.ssim_weight * self.ssim(x, y)
+            x_fft = torch.fft.rfft2(x, dim=(-2, -1))
+            y_fft = torch.fft.rfft2(y, dim=(-2, -1))
+            x_mag = torch.abs(x_fft)
+            y_mag = torch.abs(y_fft)
+            fft_loss = self.l1(x_mag, y_mag)
+            return base_loss + self.fft_weight * fft_loss
+        else:
+            raise ValueError(f"Unknown loss_type: {self.loss_type}")
 
 def set_seed(seed=42):
     import random
@@ -103,6 +123,9 @@ def main():
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint if exists")
     parser.add_argument("--use_synthetic", action="store_true", help="Use on-the-fly synthetic data generation for pre-training")
     parser.add_argument("--load_weights", type=str, default=None, help="Path to pre-trained weights to load model from (resets optimizer and epochs)")
+    parser.add_argument("--loss_type", type=str, choices=["l1", "charbonnier", "charbonnier_ssim", "charbonnier_ssim_fft"], default="charbonnier_ssim", help="Loss configuration to train with")
+    parser.add_argument("--ssim_weight", type=float, default=0.1, help="Weight for the SSIM loss term")
+    parser.add_argument("--fft_weight", type=float, default=0.05, help="Weight for the FFT loss term")
     
     # We parse manually to avoid conflicts in notebook-like/interactive environments
     args, unknown = parser.parse_known_args()
@@ -119,6 +142,7 @@ def main():
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training using device: {device}")
+    print(f"Active Loss Configuration: {args.loss_type} (ssim_weight={args.ssim_weight}, fft_weight={args.fft_weight})")
     
     # Dataloaders
     print("Loading datasets...")
@@ -133,7 +157,7 @@ def main():
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"NAFNet model initialized with {num_params:,} trainable parameters.")
     
-    criterion = CombinedLoss()
+    criterion = CombinedLoss(loss_type=args.loss_type, ssim_weight=args.ssim_weight, fft_weight=args.fft_weight)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
     
