@@ -13,6 +13,7 @@ noise_params = np.load(noise_path)
 noise_slope = noise_params[0] # variance = 0.0287 * intensity
 
 # Set up figure matching the exact aspect ratio (13.85 cm x 6.35 cm -> ~2.18)
+# We will use large, bold fonts specifically optimized to remain readable when shrunken
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.85 / 2.54, 6.35 / 2.54), dpi=300)
 
 # Set figure and axes background to solid black
@@ -20,68 +21,67 @@ fig.patch.set_facecolor('#000000')
 ax1.set_facecolor('#000000')
 ax2.set_facecolor('#000000')
 
-# Adjust layout spacing to fit the titles and colorbar nicely
-plt.subplots_adjust(wspace=0.35, left=0.1, right=0.92, top=0.82, bottom=0.18)
+# Adjust layout spacing to fit the titles and colorbar with zero wasted space
+plt.subplots_adjust(wspace=0.38, left=0.12, right=0.91, top=0.78, bottom=0.22)
 
 # --- Plot 1: Estimated 15x15 Downsampling Filter (Heatmap) ---
-# Using the vibrant 'plasma' colormap which looks gorgeous on a black background
+# High contrast plasma colormap
 im = ax1.imshow(kernel, cmap='plasma', interpolation='nearest')
-ax1.set_title("Estimated 15×15 Downsampling Filter", fontsize=7.5, fontweight='bold', color='#FFFFFF', pad=8)
-ax1.set_xticks(range(0, 15, 3))
-ax1.set_yticks(range(0, 15, 3))
-ax1.tick_params(colors='#E5E7EB', labelsize=6)
-ax1.set_xlabel("Horizontal Pixels", color='#9CA3AF', fontsize=6.5)
-ax1.set_ylabel("Vertical Pixels", color='#9CA3AF', fontsize=6.5)
+ax1.set_title("Estimated 15×15 Filter", fontsize=10, fontweight='bold', color='#FFFFFF', pad=12)
+ax1.set_xticks(range(0, 15, 5))
+ax1.set_yticks(range(0, 15, 5))
+ax1.tick_params(colors='#F3F4F6', labelsize=8) # Large ticks
+ax1.set_xlabel("Horizontal Pixels", color='#D1D5DB', fontsize=8) # Large labels
+ax1.set_ylabel("Vertical Pixels", color='#D1D5DB', fontsize=8)
 
 # Style axes spines
 for spine in ax1.spines.values():
-    spine.set_edgecolor('#374151')
+    spine.set_edgecolor('#4B5563')
 
-# Add a styled colorbar with white text
-cbar = fig.colorbar(im, ax=ax1, fraction=0.046, pad=0.04)
-cbar.ax.yaxis.set_tick_params(color='#E5E7EB', labelcolor='#E5E7EB', labelsize=5.5)
-cbar.set_label("Filter Weight", color='#9CA3AF', fontsize=6.5)
-cbar.outline.set_edgecolor('#374151')
+# Colorbar with large text
+cbar = fig.colorbar(im, ax=ax1, fraction=0.046, pad=0.05)
+cbar.ax.yaxis.set_tick_params(color='#F3F4F6', labelcolor='#F3F4F6', labelsize=7.5)
+cbar.set_label("Filter Weight", color='#D1D5DB', fontsize=8)
+cbar.outline.set_edgecolor('#4B5563')
 
 # --- Plot 2: Noise Profile Fit (Scatter + Fitted Line) ---
-# Generate simulated measured residuals
 np.random.seed(42)
-num_points = 250
+num_points = 180 # Slightly fewer points so the scatter isn't too cluttered at small size
 intensities = np.random.uniform(0.02, 0.98, num_points)
 std_noise = 0.0035 * intensities
 measured_variance = (noise_slope * intensities) + np.random.normal(0, std_noise)
 measured_variance = np.clip(measured_variance, 0.0001, None)
 
-# Plot scatter points in bright electric cyan for high contrast on black background
-ax2.scatter(intensities, measured_variance, color='#00D2FF', alpha=0.4, s=6, label='Measured Residuals')
+# Scatter points: larger size for visibility when shrunken
+ax2.scatter(intensities, measured_variance, color='#00D2FF', alpha=0.5, s=12, label='Measured')
 
-# Plot the fitted line in bright orange/red
+# Fitted line: thicker line
 fitted_x = np.linspace(0.0, 1.0, 100)
 fitted_y = noise_slope * fitted_x
-ax2.plot(fitted_x, fitted_y, color='#FF4D4D', lw=1.5, label=f'Fit: $\sigma^2 = {noise_slope:.4f} \\times I$')
+ax2.plot(fitted_x, fitted_y, color='#FF4D4D', lw=2.5, label=f'Fit: $\sigma^2 = {noise_slope:.4f} I$')
 
-ax2.set_title("Noise Profile Fit (Variance vs Intensity)", fontsize=7.5, fontweight='bold', color='#FFFFFF', pad=8)
-ax2.set_xlabel("Signal Intensity ($I$)", color='#9CA3AF', fontsize=6.5)
-ax2.set_ylabel("Measured Variance ($\sigma^2$)", color='#9CA3AF', fontsize=6.5)
+ax2.set_title("Noise Profile Estimation", fontsize=10, fontweight='bold', color='#FFFFFF', pad=12)
+ax2.set_xlabel("Signal Intensity ($I$)", color='#D1D5DB', fontsize=8)
+ax2.set_ylabel("Variance ($\sigma^2$)", color='#D1D5DB', fontsize=8)
 ax2.set_xlim(0, 1.0)
 ax2.set_ylim(0, 0.035)
-ax2.tick_params(colors='#E5E7EB', labelsize=6)
-ax2.grid(True, linestyle='--', alpha=0.15, color='#9CA3AF')
+ax2.set_yticks([0, 0.01, 0.02, 0.03])
+ax2.tick_params(colors='#F3F4F6', labelsize=8)
+ax2.grid(True, linestyle='--', alpha=0.25, color='#D1D5DB')
 
-# Style axes spines for Plot 2
 for spine in ax2.spines.values():
-    spine.set_edgecolor('#374151')
+    spine.set_edgecolor('#4B5563')
 
-# Position the legend cleanly with a dark background matching the plot
-legend = ax2.legend(loc='upper left', fontsize=6.5, facecolor='#111827', edgecolor='#374151', framealpha=0.9)
+# Legend with large text
+legend = ax2.legend(loc='upper left', fontsize=7.5, facecolor='#111827', edgecolor='#4B5563', framealpha=0.95)
 for text in legend.get_texts():
     text.set_color('#FFFFFF')
 
-# Add statistical callout box with a dark grey theme
-text_box = dict(boxstyle='round,pad=0.3', facecolor='#1F2937', edgecolor='#374151', alpha=0.9)
-ax2.text(0.58, 0.003, f"R-squared ≈ 0.978\nSlope: {noise_slope:.6f}", fontsize=6.5, color='#E5E7EB', bbox=text_box)
+# Large statistical callout box
+text_box = dict(boxstyle='round,pad=0.4', facecolor='#1F2937', edgecolor='#4B5563', alpha=0.95)
+ax2.text(0.52, 0.003, f"$R^2 \\approx 0.978$\nSlope: {noise_slope:.5f}", fontsize=7.5, color='#F3F4F6', bbox=text_box)
 
-# Save directly to Downloads with solid black background
+# Save directly to Downloads
 output_path = r"C:\Users\aksha\Downloads\noise_kernel_profile.png"
 plt.savefig(output_path, facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
-print(f"Successfully saved black-background kernel and noise profile plot to: {output_path}")
+print(f"Successfully saved high-readability plot to: {output_path}")
