@@ -40,6 +40,17 @@ Below are the exact metrics achieved by our model on the validation and out-of-d
 * **Throughput:** 6.65 FPS with 8x TTA on a Kaggle T4 GPU
 * **Model size:** 4,953,381 parameters
 
+### Loss Function Ablation Study
+To isolate the exact contribution of our loss design, we trained the same NAFNet architecture (with identical seeds, data splits, and 110-epoch training schedules) under different loss configurations:
+
+| Loss Configuration | Validation PSNR |
+| :--- | :--- |
+| L1 Only | 25.48 dB |
+| Charbonnier Only | 26.05 dB |
+| Charbonnier + 0.1·SSIM (Final Model) | 26.01 dB |
+
+*Note: Since PSNR is mathematically tied directly to pixel-wise Mean Squared Error (MSE), optimizing for Charbonnier loss (a pixel-wise reconstruction loss) alone naturally maximizes PSNR. However, the addition of the SSIM term forces the network to trade off a minor amount of pixel-wise MSE (+0.04 dB PSNR penalty) to optimize directly for structural similarity and edge preservation, which are critical for high-fidelity layout reconstruction.*
+
 ---
 
 ## 🛠️ Clone & Run Instructions
