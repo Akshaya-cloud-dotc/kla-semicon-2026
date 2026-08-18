@@ -77,7 +77,7 @@ The evaluation script [`run.py`](file:///C:/Users/aksha/.gemini/antigravity/scra
 ### Usage Example
 Run the script using positional arguments:
 ```bash
-python run.py <input_dir> <output_dir> --batch_size 16
+python run.py <input-dir> <output-dir>
 ```
 Or using optional flags:
 ```bash

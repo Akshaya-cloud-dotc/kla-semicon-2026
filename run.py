@@ -44,7 +44,7 @@ def main():
         if not os.path.isabs(checkpoint_path):
             checkpoint_path = os.path.normpath(os.path.join(script_dir, checkpoint_path))
     else:
-        checkpoint_path = os.path.join(script_dir, "models", "finetuned_nafnet.pth")
+        checkpoint_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'finetuned_nafnet.pth')
         
     print(f"Loading checkpoint from: {checkpoint_path}")
     if not os.path.exists(checkpoint_path):
@@ -142,8 +142,10 @@ def main():
                 torch.cuda.synchronize()
             total_inference_time += (time.time() - t_inf_start)
             
-            # Clamp output to [0, 1]
-            pred = torch.clamp(pred, 0.0, 1.0)
+            # Remove NaNs or Infs before clamping
+            out = pred
+            out = torch.nan_to_num(out, nan=0.0, posinf=1.0, neginf=0.0)
+            pred = torch.clamp(out, 0.0, 1.0)
             
             # Cast back to float32 before converting to numpy
             pred_np = pred.float().cpu().numpy() # Shape: [B, 1, 256, 256]
