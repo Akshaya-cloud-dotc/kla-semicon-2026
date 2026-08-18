@@ -28,17 +28,17 @@ np.save(os.path.join(temp_input, "simulated_degraded.npy"), degraded)
 print("[1/3] Generated simulated degraded test image in temp_smoke_input/.")
 
 # 2. Run the evaluation script using the local model and weights
-# First check the repository root directory (cross-machine compatible)
-weights_path = os.path.join(script_dir, "finetuned_nafnet.pth")
+# First check the models directory (cross-machine compatible)
+weights_path = os.path.join(script_dir, "models", "finetuned_nafnet.pth")
 if not os.path.exists(weights_path):
     # Fallback to local user Downloads folder
     weights_path = r"C:\Users\aksha\Downloads\finetuned_nafnet.pth"
 
-print(f"[2/3] Running evaluate.py on simulated image using weights: {weights_path}...")
+print(f"[2/3] Running run.py on simulated image using weights: {weights_path}...")
 
 cmd = [
     sys.executable,
-    os.path.join(script_dir, "evaluate.py"),
+    os.path.join(script_dir, "run.py"),
     temp_input,
     temp_output,
     "--checkpoint", weights_path
@@ -48,7 +48,7 @@ result = subprocess.run(cmd, capture_output=True, text=True)
 print(result.stdout)
 
 if result.returncode != 0:
-    print(f"Error executing evaluate.py: {result.stderr}")
+    print(f"Error executing run.py: {result.stderr}")
     exit(1)
 
 # 3. Load the restored image and verify it

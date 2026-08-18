@@ -5,13 +5,13 @@ This repository contains the complete submission codebase for the joint super-re
 ---
 
 ## 📂 Repository Structure
-* **`evaluate.py`**: Standalone evaluation script for the benchmarking team. Supports batching, Test-Time Augmentation (TTA), and GPU-accelerated inference.
+* **`run.py`**: Standalone evaluation entry-point script for the benchmarking team. Supports batching, Test-Time Augmentation (TTA), and GPU-accelerated inference.
 * **`model.py`**: Definition of the Nonlinear Activation Free Network (`NAFNet`) model architecture.
 * **`dataset.py`**: PyTorch dataset loaders supporting degraded image loading, on-the-fly degradation modeling, and kernel/noise-profile estimations.
 * **`train.py`**: Training pipeline for model pre-training and fine-tuning.
 * **`infer_tta.py` / `infer_optimized.py`**: Inference optimization and TTA generators.
 * **`estimated_kernel.npy` / `noise_profile.npy`**: Extracted degradation profile parameters.
-* **`finetuned_nafnet.pth`**: Final trained weights checkpoint (~60 MB).
+* **`models/`**: Folder containing the final trained weights checkpoint (`finetuned_nafnet.pth`, ~60 MB).
 * **`restored_outputs/`**: Folder containing the 400 restored `.npy` outputs from the test set.
 * **`requirements.txt`**: Minimal environment dependencies to execute the inference script.
 
@@ -72,19 +72,19 @@ pip install -r requirements.txt
 
 ## 🖥️ Running Evaluation (Benchmarking)
 
-The evaluation script [`evaluate.py`](file:///C:/Users/aksha/.gemini/antigravity/scratch/kla-semicon-2026/evaluate.py) loads the model weights from [`finetuned_nafnet.pth`](file:///C:/Users/aksha/.gemini/antigravity/scratch/kla-semicon-2026/finetuned_nafnet.pth) (resolved relative to the script file), reads degraded `.npy` arrays (float32, typically 128x128 or 256x256) from the input directory, processes them in batches, and saves clamped restored outputs at 2x the input resolution, values in [0,1] in the output directory.
+The evaluation script [`run.py`](file:///C:/Users/aksha/.gemini/antigravity/scratch/kla-semicon-2026/run.py) loads the model weights from [`models/finetuned_nafnet.pth`](file:///C:/Users/aksha/.gemini/antigravity/scratch/kla-semicon-2026/models/finetuned_nafnet.pth) (resolved relative to the script file), reads degraded `.npy` arrays (float32, typically 128x128 or 256x256) from the input directory, processes them in batches, and saves clamped restored outputs at 2x the input resolution, values in [0,1] in the output directory.
 
 ### Usage Example
 Run the script using positional arguments:
 ```bash
-python evaluate.py <input_dir> <output_dir> --batch_size 16
+python run.py <input_dir> <output_dir> --batch_size 16
 ```
 Or using optional flags:
 ```bash
-python evaluate.py --input_dir ./test_in --output_dir ./test_out --batch_size 16
+python run.py --input_dir ./test_in --output_dir ./test_out --batch_size 16
 ```
 
 To enable **Test-Time Augmentation (TTA)** (runs 8-way orientation inference per batch):
 ```bash
-python evaluate.py ./test_in ./test_out --use_tta --batch_size 16
+python run.py ./test_in ./test_out --use_tta --batch_size 16
 ```
